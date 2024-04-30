@@ -1,8 +1,7 @@
 # **Chess Game with IA**
 *Version: 0.0.1*
 
-En este proyecto con la asistencia de una cámara, se mapeara un tablero de ajedrez (4 en 1), el cuál mediante la ayuda de la IA será capaz de reconocer las piezas así como a que personaje pertenecen.
-También se tomará en cuenta cuando se hagan jugadas, llevando el control de una puntuación.
+In this project, with the assistance of a camera, a chess board will be mapped (4 in 1), which, with the help of AI, will be able to recognize the pieces as well as which character they belong to. It will also be taken into account when plays are made, keeping track of a score.
 
 - Project Management Framework: Scrum
 - Programming language: Python
