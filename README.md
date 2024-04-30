@@ -7,7 +7,7 @@ Project Management Framework: Scrum
 Programming language: Python
 Version: 3.11.3
 User Interface: TkInter v8.5, Flet v0.22.0
-IA: OpenCV / TensorFlow 2.14.0
+Artificial Intelligence: TensorFlow 2.14.0
 Virtual environment: 20.25.1
 Camera library: OpenCV
 Camera: Redmi 12
