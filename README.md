@@ -10,5 +10,5 @@ In this project, with the assistance of a camera, a chess board will be mapped (
 - Artificial Intelligence: TensorFlow 2.14.0
 - Virtual environment: 20.25.1
 - Camera library: OpenCV
-- Camera: Celular
+- Camera: Smartphone
 
