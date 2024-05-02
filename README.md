@@ -7,7 +7,7 @@ In this project, with the assistance of a camera, a chess board will be mapped (
 - Programming language: Python
 - Version: 3.11.3
 - User Interface: TkInter v8.5, Flet v0.22.0
-- Artificial Intelligence: TensorFlow 2.14.0
+- Artificial Intelligence: Computacional Vision: OpenCV
 - Virtual environment: 20.25.1
 - Camera library: OpenCV
 - Camera: Smartphone
