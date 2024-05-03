@@ -3,3 +3,4 @@
 #También deberá ser capaz de reconocer movimientos y la puntuación que lleva el juego.
 
 print('Hello World!')
+print('Prueba')
