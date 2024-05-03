@@ -1,0 +1,8 @@
+--para ejecutar el archivo y se actualice automaticamente
+a los cambios
+
+    flet run
+
+--para ejecutar normal
+    
+    py main.py

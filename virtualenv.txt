@@ -1,0 +1,29 @@
+--para crear el entorno virtual:
+
+    python -m venv mi_entorno_virtual (tablero)
+
+--para activarlo desde la terminal:
+
+    venv\Scripts\activate (tablero)
+
+--para desactivarlo:
+
+    deactivate 
+
+--Para guardar todas las dependencias de tu entorno virtual en un archivo,
+ puedes utilizar el comando pip freeze. Este comando muestra todas las bibliotecas instaladas 
+en tu entorno virtual junto con sus versiones, y puedes redirigir 
+su salida a un archivo de texto.
+
+    pip freeze > requirements.txt
+
+--Este comando guardará todas las dependencias en un archivo llamado requirements.txt. Luego, 
+puedes compartir este archivo con otros desarrolladores
+ o usarlo para recrear exactamente el mismo entorno virtual en otro lugar, 
+ ejecutando el siguiente comando:
+
+
+    pip install -r requirements.txt
+
+
+
