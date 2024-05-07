@@ -1,10 +1,10 @@
 --para crear el entorno virtual:
 
-    python -m venv mi_entorno_virtual (tablero)
+    python -m venv chess 
 
 --para activarlo desde la terminal:
 
-    venv\Scripts\activate (tablero)
+    chess\Scripts\activate 
 
 --para desactivarlo:
 
