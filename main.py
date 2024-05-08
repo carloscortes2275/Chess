@@ -8,18 +8,15 @@ def main(page: ft.Page):
     page.window_max_width = 1200
     page.window_max_height = 800
 
-    conn_c = Conn_camera("IP adress")
-
     m = Menu()
-    page.add(
-        ft.Row(
-        [
-        m,
-        ft.VerticalDivider(width=1),
-        ft.Column([ conn_c]),
-        ],
-        expand=True,
-  ))
+    page.add(ft.Container(
+          content=m,
+          bgcolor=ft.colors.GREY_100,
+          padding=20,
+          width=300,
+          border_radius=10,
+          height=300
+    ))
 
 
 ft.app(target=main)

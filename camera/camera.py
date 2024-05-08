@@ -1,17 +1,12 @@
 import cv2
 
 class Camera:
-    def __init__(self, ip, puerto=8080):
-        self.ip = ip
-        self.puerto = puerto
-        self.url = f'http://{self.ip}:{self.puerto}/video'
-        self.cap = cv2.VideoCapture(self.url)
+    def __init__(self):
         self.exit = False
         self.usb = False
         
     def mostrar_video(self):
-        if self.usb:
-            self.cap = cv2.VideoCapture(0)
+
         while True:
             _, frame = self.cap.read()
             cv2.imshow('Recibiendo transmision', frame)
@@ -24,7 +19,19 @@ class Camera:
 
         self.cap.release()
         cv2.destroyAllWindows()
-        print("Cerrando transmision")
+
+    def activar_usb(self):
+        self.usb = True
+        self.cap = cv2.VideoCapture(1)
+
+    
+    def activar_wifi(self,ip:str, port:int = 8080):
+        self.ip = ip
+        self.port = port
+        self.url = f'http://{self.ip}:{self.port}/video'
+        self.cap = cv2.VideoCapture(self.url)
+        self.usb = False
+
 
     def cerrar(self):
         self.exit = True
