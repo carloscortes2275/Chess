@@ -7,14 +7,19 @@ class Camera:
         self.url = f'http://{self.ip}:{self.puerto}/video'
         self.cap = cv2.VideoCapture(self.url)
         self.exit = False
-
+        self.usb = False
+        
     def mostrar_video(self):
+        if self.usb:
+            self.cap = cv2.VideoCapture(0)
         while True:
             _, frame = self.cap.read()
-            # Mostrar el fotograma
             cv2.imshow('Recibiendo transmision', frame)
             
             if self.exit:
+                break
+
+            if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
 
         self.cap.release()
