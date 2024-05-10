@@ -1,26 +1,30 @@
 from camera import Camera
 import flet as ft
+import pickle
+
 
 class Conn_camera(ft.Row):
-    def __init__(self,title:str) -> None:
+    def __init__(self, title: str) -> None:
         super().__init__()
-        self.txt_ip = ft.TextField(value=None, width=200,color="blue",disabled=self.disabled)
-        self.port = ft.TextField(value=8080, width=200,color="blue",disabled=self.disabled)
+        self.txt_ip = ft.TextField(
+            value=None, width=200, color="blue", disabled=self.disabled)
+        self.port = ft.TextField(
+            value=8080, width=200, color="blue", disabled=self.disabled)
         self.cam = Camera()
         self.title = title
         self.disabled = False
         self.is_transmitting = False
 
-    def iniciar(self,e):
+    def iniciar(self, e):
         if self.cam.usb:
             self.is_transmitting = True
             self.cam.mostrar_video()
         else:
-            self.cam.activar_wifi(self.txt_ip.value,self.port.value)
+            self.cam.activar_wifi(self.txt_ip.value, self.port.value)
             self.is_transmitting = True
             self.cam.mostrar_video()
 
-    def cerrar(self,e):
+    def cerrar(self, e):
         if self.is_transmitting:
             self.cam.cerrar()
             self.is_transmitting = False
@@ -41,24 +45,27 @@ class Conn_camera(ft.Row):
         self.txt_ip.label = ""
         self.port.value = 8080
 
-    def build(self)->ft.Column:
+    def build(self) -> ft.Column:
         return ft.Column(controls=[
             ft.Text(self.title, weight=ft.FontWeight.W_500),
             ft.Row(
-            [ 
-                self.txt_ip,
-            ]),
+                [
+                    self.txt_ip,
+                ]),
             ft.Row(
-            [ 
-                self.port,
-            ]
+                [
+                    self.port,
+                ]
             ),
             ft.Row(
-            [
-                ft.ElevatedButton("Start", on_click=self.iniciar,bgcolor="blue", color="white"),
-                ft.ElevatedButton("Finish", on_click=self.cerrar,bgcolor="pink", color="white")
-            ])
+                [
+                    ft.ElevatedButton(
+                        "Start", on_click=self.iniciar, bgcolor="blue", color="white"),
+                    ft.ElevatedButton(
+                        "Finish", on_click=self.cerrar, bgcolor="pink", color="white")
+                ])
         ])
+
 
 class Menu(ft.Row):
     def __init__(self) -> None:
@@ -73,21 +80,22 @@ class Menu(ft.Row):
             height=700,
             bgcolor=ft.colors.GREY_100,
             destinations=[
-                ft.NavigationRailDestination(icon_content=ft.Icon(ft.icons.WIFI), label="WIFI"),
-                ft.NavigationRailDestination(icon_content=ft.Icon(ft.icons.USB), label="USB")
+                ft.NavigationRailDestination(
+                    icon_content=ft.Icon(ft.icons.WIFI), label="WIFI"),
+                ft.NavigationRailDestination(
+                    icon_content=ft.Icon(ft.icons.USB), label="USB")
             ],
             on_change=lambda e: self.selection_changed(e),
         )
 
         self.menu = ft.Row(
-        [
-            self.rail,
-            ft.Column([self.connection]),
-        ],
-        vertical_alignment=ft.CrossAxisAlignment.START,
-        alignment=ft.MainAxisAlignment.CENTER,
+            [
+                self.rail,
+                ft.Column([self.connection]),
+            ],
+            vertical_alignment=ft.CrossAxisAlignment.START,
+            alignment=ft.MainAxisAlignment.CENTER,
         )
-
 
     def selection_changed(self, e):
         if e.control.selected_index == 1:
@@ -96,10 +104,75 @@ class Menu(ft.Row):
             self.connection.wifi_active()
         self.update()
 
-    def build(self)->ft.Row:
+    def build(self) -> ft.Container:
         return self.menu
 
 
-    
-   
+class Celda(ft.Container):
+    def __init__(self, color: str, top: int, left: int) -> None:
+        super().__init__()
+        self.color = color
+        self.width = 47.5
+        self.height = 47.5
+        self.border_radius = 5
+        self.bgcolor = color
+        self.top = top
+        self.left = left
 
+    def build(self) -> ft.Container:
+        return self
+
+
+class Pieza (ft.Container):
+    def __init__(self, img: str, top: int, left: int) -> None:
+        super().__init__()
+        self.width = 47.5
+        self.height = 47.5
+        self.image_src = img
+        self.top = top
+        self.left = left
+
+    def build(self) -> ft.Container:
+        return self
+
+
+class Tablero(ft.Stack):
+    def __init__(self) -> None:
+        super().__init__()
+        self.piezas = ft.Stack()
+
+        with open('tablero_list.pkl', 'rb') as file:
+            self.tablero_l = pickle.load(file)
+
+        self.piezas_pos = [{"img": "alfil.png", "top": 0, "left": 50}]
+
+        self.tablero = ft.Stack(
+            [Celda(i["color"], i["top"], i["left"]) for i in self.tablero_l])
+
+        self.piezas = ft.Stack(
+            [Pieza(i["img"], i["top"], i["left"]) for i in self.piezas_pos])
+
+        self.tablero = ft.Stack(
+            [
+                self.tablero,
+                self.piezas
+            ]
+        )
+
+    def update_pos(self, positions: list):
+        new_pos = []
+        for p in positions:
+            for i in range(len(self.tablero_l)):
+                if p["id"] == self.tablero_l[i]["id"]:
+                    top = self.tablero_l[i]["top"]
+                    left = self.tablero_l[i]["left"]
+                    img = "../sources/" + p["img"] + ".png"
+                    break
+            new_pos.append({"img": img, "top": top, "left": left})
+
+        self.piezas.controls = [
+            Pieza(i["img"], i["top"], i["left"]) for i in new_pos]
+        self.update()
+
+    def build(self) -> ft.Stack:
+        return self.tablero

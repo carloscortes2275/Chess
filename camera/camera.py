@@ -22,7 +22,7 @@ class Camera:
 
     def activar_usb(self):
         self.usb = True
-        self.cap = cv2.VideoCapture(1)
+        self.cap = cv2.VideoCapture(0)
 
     
     def activar_wifi(self,ip:str, port:int = 8080):
