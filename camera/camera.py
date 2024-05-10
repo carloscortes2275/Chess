@@ -10,6 +10,17 @@ class Camera:
         while True:
             _, frame = self.cap.read()
             cv2.imshow('Recibiendo transmision', frame)
+
+            # Aplicar el detector de bordes Canny al fotograma
+            umbral_minimo = 100
+            umbral_maximo = 200
+            bordes = cv2.Canny(frame, umbral_minimo, umbral_maximo) #Funcion de OpenCV para la detección de bordes
+            # Convertir los bordes a color
+            bordes_color = cv2.cvtColor(bordes, cv2.COLOR_GRAY2BGR)
+            # Dibujar los bordes sobre el fotograma original
+            frame_con_bordes = cv2.addWeighted(frame, 0.5, bordes_color, 1, 0)
+            # Mostrar el fotograma con los bordes superpuestos
+            cv2.imshow('Recibiendo transmision', frame_con_bordes)
             
             if self.exit:
                 break
