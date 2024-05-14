@@ -9,12 +9,14 @@ def main(page: ft.Page):
     page.horizontal_alignment = ft.MainAxisAlignment.START
     # page.window_full_screen = True
     page.window_maximized = True
+    page.theme_mode = ft.ThemeMode.LIGHT
+
     menu = Menu()
     tablero = Tablero()
 
     # ejemplo de los valores que tenemos que obtener de la IA (posicion de la pieza e identificador de la pieza)
     # AN (AlfilNegro)
-    new_pos = [{"id": "D14", "img": "AN"}, {'id': 'E14', 'img': 'AN'}]
+    new_pos = [{"id": "D14", "img": "AR"}, {'id': 'E14', 'img': 'PN'}, {'id': 'F14', 'img': 'TA'}, {'id':"G14", "img": "CZ"}]
 
     page.add(ft.Row(
         [
@@ -55,7 +57,7 @@ def main(page: ft.Page):
         vertical_alignment=ft.CrossAxisAlignment.START,
     )
     )
-    
+
     # despues de 5 segundos se mueve la pieza a la derecha usando tablero.update_pos()
     # para probar actualizar la posicion de la pieza
     time.sleep(3)
