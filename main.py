@@ -7,33 +7,19 @@ def main(page: ft.Page):
     page.vertical_alignment = ft.MainAxisAlignment.START
     page.horizontal_alignment = ft.MainAxisAlignment.START
     page.window_maximized = True
-    page.theme_mode = ft.ThemeMode.LIGHT
-
+    page.scroll = True
     menu = Menu()
     tablero = Tablero()
-
-    # Ejemplo de las posiciones de las piezas en la parte superior del tablero
+    scores = Scores()
+    # Ejemplo de las posiciones obtenidas de la IA (sirve para calcular los scores de las piezas y
+    # mostrarlas las piezas en la interfaz gráfica)
     new_pos = [
-        {"id": "D14", "img": "AZ", "top": 0, "left": 0},
-        {"id": "E14", "img": "PN", "top": 0, "left": 50},
-        {"id": "F14", "img": "TR", "top": 0, "left": 100},
-        {"id": "G14", "img": "QA", "top": 0, "left": 150},
-        {"id": "H14", "img": "QZ", "top": 0, "left": 200}
+        {"id": "D14", "img": "AZ"},
+        {"id": "E14", "img": "PN"},
+        {"id": "F14", "img": "TR"},
+        {"id": "G14", "img": "QA"},
+        {"id": "H14", "img": "QZ"}
     ]
-
-    # Contenedor para mostrar las puntuaciones
-    score_text = ft.Text("Calculando puntuaciones...", color=ft.colors.BLACK)
-
-    def update_scores():
-        scores = tablero.calculate_scores()
-        score_text.value = (f"Puntuación Azul: {scores['Z']}\n"
-                            f"Puntuación Amarillo: {scores['A']}\n"
-                            f"Puntuación Negro: {scores['N']}\n"
-                            f"Puntuación Rojo: {scores['R']}")
-        page.update()
-
-    # Inicialmente, calcula y muestra las puntuaciones
-    update_scores()
 
     page.add(ft.Row(
         [
@@ -48,7 +34,7 @@ def main(page: ft.Page):
                         height=250
                     ),
                     ft.Container(
-                        content=score_text,
+                        content=scores,
                         padding=20,
                         width=300,
                         border_radius=10,
@@ -72,8 +58,11 @@ def main(page: ft.Page):
     ))
 
     # Después de 3 segundos se mueven las piezas a las posiciones especificadas
-    time.sleep(3)
+    time.sleep(1)
     tablero.update_pos(new_pos)
-    update_scores()
+    scores.update_scores(new_pos)
 
 ft.app(target=main)
+#ft.app(target=main, view=ft.AppView.WEB_BROWSER)
+
+

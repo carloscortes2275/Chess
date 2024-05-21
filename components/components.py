@@ -2,6 +2,7 @@ from camera import Camera
 import flet as ft
 import pickle
 
+
 class Conn_camera(ft.Row):
     def __init__(self, title: str) -> None:
         super().__init__()
@@ -65,6 +66,7 @@ class Conn_camera(ft.Row):
                 ])
         ])
 
+
 class Menu(ft.Row):
     def __init__(self) -> None:
         super().__init__()
@@ -105,12 +107,13 @@ class Menu(ft.Row):
     def build(self) -> ft.Container:
         return self.menu
 
+
 class Celda(ft.Container):
     def __init__(self, color: str, top: int, left: int) -> None:
         super().__init__()
         self.color = color
-        self.width = 47.5
-        self.height = 47.5
+        self.width = 52.5
+        self.height = 52.5
         self.border_radius = 5
         self.bgcolor = color
         self.top = top
@@ -119,11 +122,12 @@ class Celda(ft.Container):
     def build(self) -> ft.Container:
         return self
 
+
 class Pieza(ft.Container):
     def __init__(self, img: str, top: int, left: int) -> None:
         super().__init__()
-        self.width = 47.5
-        self.height = 47.5
+        self.width = 52.5
+        self.height = 52.5
         self.image_src = img
         self.top = top
         self.left = left
@@ -131,11 +135,29 @@ class Pieza(ft.Container):
     def build(self) -> ft.Container:
         return self
 
+class Scorevalue(ft.Container):
+    def __init__(self, value: int, color: str) -> None:
+        super().__init__()
+        self.color = color
+        self.width = 20
+        self.height = 20
+
+        self.casilla = ft.Container(
+            ft.Text(value, size=20),
+            bgcolor=self.color,
+            width=self.width,
+            height=self.height,
+            border_radius=5
+        )
+
+    def build(self) -> ft.Container:
+        return self.casilla
+
+
 class Tablero(ft.Stack):
     def __init__(self) -> None:
         super().__init__()
         self.piezas = ft.Stack()
-
         with open('tablero_list.pkl', 'rb') as file:
             self.tablero_l = pickle.load(file)
 
@@ -171,8 +193,83 @@ class Tablero(ft.Stack):
 
     def build(self) -> ft.Stack:
         return self.tablero
-    
-    def calculate_scores(self):
+
+
+class Scores(ft.Column):
+    def __init__(self) -> None:
+        super().__init__()
+        self.scores = {"Z": 0, "A": 0, "N": 0, "R": 0}
+        self.s_blue = ft.Text(
+            f" blue player        | {self.scores['Z']}", size="20", color="white", weight=ft.FontWeight.W_500)
+        self.s_yellow = ft.Text(
+            f" yellow player     | {self.scores['A']}", size="20", color="white", weight=ft.FontWeight.W_500)
+        self.s_black = ft.Text(
+            f" black player       | {self.scores['N']}", size="20", color="white",     weight=ft.FontWeight.W_500)
+        self.s_red = ft.Text(
+            f" red player          | {self.scores['R']}", size="20", color="white", weight=ft.FontWeight.W_500)
+        self.board_scores = ft.Column(
+            controls=[
+                ft.Text("score", size=50, weight=ft.FontWeight.W_600,
+                        font_family="BigBlueTerm437 Nerd Font"),
+                ft.Row(
+                    [
+                        ft.Container(
+                            content=self.s_blue,
+                            bgcolor="blue",
+                            width=200,
+                            height=30,
+                            border_radius=5
+                        )
+                    ]
+                ),
+                ft.Row(
+                    [
+                        ft.Container(
+                            content=self.s_yellow,
+                            bgcolor="yellow",
+                            width=200,
+                            height=30,
+                            border_radius=5
+                        )
+                    ]
+                ),
+                ft.Row(
+                    [
+                        ft.Container(
+                            content=self.s_black,
+                            bgcolor="black",
+                            width=200,
+                            height=30,
+                            border_radius=5
+                        )
+                    ]
+                ),
+                ft.Row(
+                    [
+                        ft.Container(
+                            content=self.s_red,
+                            bgcolor="red",
+                            width=200,
+                            height=30,
+                            border_radius=5
+                        )
+                    ]
+                )
+            ]
+        )
+
+    def build(self) -> ft.Column:
+        return self.board_scores
+
+    def update_scores(self, positions: list):
+        self.scores = self.calculate_scores(positions)
+        self.s_blue.value = f" blue player        | {self.scores['Z']}"
+        self.s_yellow.value = f" yellow player     | {self.scores['A']}"
+        self.s_black.value = f" black player       | {self.scores['N']}"
+        self.s_red.value = f" red player          | {self.scores['R']}"
+        self.update()
+
+    def calculate_scores(self, positions: list):
         PIECE_SCORES = {
             "P": 1,
             "C": 3,
@@ -189,28 +286,11 @@ class Tablero(ft.Stack):
             "R": 0
         }
 
-        for pieza in self.piezas.controls:
-            #print(f"Processing piece: {pieza.image_src}")  # Depuración
-            img_parts = pieza.image_src.split('/')[-1]
-            #print(f"img_parts: {img_parts}")  # Depuración
-            if len(img_parts) >= 2:
-                piece_name = img_parts[0]  # Primera letra para identificar pieza
-                piece_color = img_parts[1]  # Segunda letra para identificar color
-                #print(f"piece_name: {piece_name}, piece_color: {piece_color}")  # Depuración
-
-                if piece_name in PIECE_SCORES:
-                    scores[piece_color] += PIECE_SCORES[piece_name]
-
-        #print(f"Scores: {scores}")  # Depuración
+        for pieza in positions:
+            img_parts = pieza['img']
+            piece_name = img_parts[0]  # Primera letra para identificar pieza
+            piece_color = img_parts[1]  # Segunda letra para identificar color
+            # Depuración
+            if piece_name in PIECE_SCORES:
+                scores[piece_color] += PIECE_SCORES[piece_name]
         return scores
-
-    def get_piece_color(self, img_path):
-        if "Z" in img_path.lower():
-            return "Z"
-        elif "A" in img_path.lower():
-            return "A"
-        elif "N" in img_path.lower():
-            return "N"
-        elif "R" in img_path.lower():
-            return "R"
-        return None
