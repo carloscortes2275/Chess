@@ -2,7 +2,6 @@ from camera import Camera
 import flet as ft
 import pickle
 
-
 class Conn_camera(ft.Row):
     def __init__(self, title: str) -> None:
         super().__init__()
@@ -66,7 +65,6 @@ class Conn_camera(ft.Row):
                 ])
         ])
 
-
 class Menu(ft.Row):
     def __init__(self) -> None:
         super().__init__()
@@ -107,7 +105,6 @@ class Menu(ft.Row):
     def build(self) -> ft.Container:
         return self.menu
 
-
 class Celda(ft.Container):
     def __init__(self, color: str, top: int, left: int) -> None:
         super().__init__()
@@ -122,8 +119,7 @@ class Celda(ft.Container):
     def build(self) -> ft.Container:
         return self
 
-
-class Pieza (ft.Container):
+class Pieza(ft.Container):
     def __init__(self, img: str, top: int, left: int) -> None:
         super().__init__()
         self.width = 47.5
@@ -134,7 +130,6 @@ class Pieza (ft.Container):
 
     def build(self) -> ft.Container:
         return self
-
 
 class Tablero(ft.Stack):
     def __init__(self) -> None:
@@ -176,3 +171,46 @@ class Tablero(ft.Stack):
 
     def build(self) -> ft.Stack:
         return self.tablero
+    
+    def calculate_scores(self):
+        PIECE_SCORES = {
+            "P": 1,
+            "C": 3,
+            "A": 3,
+            "T": 5,
+            "Q": 9,
+            "K": 0  # El rey no tiene puntuación porque no se cuenta en el valor del juego
+        }
+
+        scores = {
+            "Z": 0,
+            "A": 0,
+            "N": 0,
+            "R": 0
+        }
+
+        for pieza in self.piezas.controls:
+            #print(f"Processing piece: {pieza.image_src}")  # Depuración
+            img_parts = pieza.image_src.split('/')[-1]
+            #print(f"img_parts: {img_parts}")  # Depuración
+            if len(img_parts) >= 2:
+                piece_name = img_parts[0]  # Primera letra para identificar pieza
+                piece_color = img_parts[1]  # Segunda letra para identificar color
+                #print(f"piece_name: {piece_name}, piece_color: {piece_color}")  # Depuración
+
+                if piece_name in PIECE_SCORES:
+                    scores[piece_color] += PIECE_SCORES[piece_name]
+
+        #print(f"Scores: {scores}")  # Depuración
+        return scores
+
+    def get_piece_color(self, img_path):
+        if "Z" in img_path.lower():
+            return "Z"
+        elif "A" in img_path.lower():
+            return "A"
+        elif "N" in img_path.lower():
+            return "N"
+        elif "R" in img_path.lower():
+            return "R"
+        return None
