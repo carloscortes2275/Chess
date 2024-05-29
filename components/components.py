@@ -112,8 +112,8 @@ class Celda(ft.Container):
     def __init__(self, color: str, top: int, left: int) -> None:
         super().__init__()
         self.color = color
-        self.width = 52.5
-        self.height = 52.5
+        self.width = 46
+        self.height = 46
         self.border_radius = 5
         self.bgcolor = color
         self.top = top
@@ -123,11 +123,41 @@ class Celda(ft.Container):
         return self
 
 
+class Position_Indicator(ft.Container):
+    def __init__(self, top: int, left: int, id: str) -> None:
+        super().__init__()
+        self.color = "black"
+        self.width = 46
+        self.height = 46
+        self.border_radius = 5
+        self.bgcolor = ft.colors.TEAL_ACCENT_400
+        self.top = top
+        self.left = left
+        self.content = ft.Text(id, text_align=ft.TextAlign.CENTER, size=30)
+
+    def build(self) -> ft.Container:
+        return self
+
+
+class C_Player(ft.Container):
+    def __init__(self, id: ft.Text) -> None:
+        super().__init__()
+        self.color = "white"
+        self.width = 200
+        self.height = 30
+        self.border_radius = 10
+        self.bgcolor = id.value
+        self.content = id
+
+    def build(self) -> ft.Container:
+        return self
+
+
 class Pieza(ft.Container):
     def __init__(self, img: str, top: int, left: int) -> None:
         super().__init__()
-        self.width = 52.5
-        self.height = 52.5
+        self.width = 46
+        self.height = 46
         self.image_src = img
         self.top = top
         self.left = left
@@ -135,49 +165,128 @@ class Pieza(ft.Container):
     def build(self) -> ft.Container:
         return self
 
-class Scorevalue(ft.Container):
-    def __init__(self, value: int, color: str) -> None:
-        super().__init__()
-        self.color = color
-        self.width = 20
-        self.height = 20
 
-        self.casilla = ft.Container(
-            ft.Text(value, size=20),
-            bgcolor=self.color,
-            width=self.width,
-            height=self.height,
-            border_radius=5
-        )
+class Scorevalue(ft.Container):
+    def __init__(self, color: str, text: ft.Text) -> None:
+        super().__init__()
+        self.color = "white"
+        self.width = 250
+        self.height = 30
+        self.bgcolor = color
+        self.border_radius = 7.5
+        self.content = text
 
     def build(self) -> ft.Container:
-        return self.casilla
+        return self
 
 
 class Tablero(ft.Stack):
     def __init__(self) -> None:
         super().__init__()
+        self.players = ["red", "blue", "black", "yellow"]
+        self.turno = 0
+        self.piezas_pos = []
+        self.prev_positions = []
+        self.undo_positions = []
+        self.undo_times = 0
+
+        self.current_player = ft.Text(
+            self.players[self.turno], size=20, color="white", weight=ft.FontWeight.W_500, text_align=ft.TextAlign.CENTER)
+
         self.piezas = ft.Stack()
         with open('tablero_list.pkl', 'rb') as file:
             self.tablero_l = pickle.load(file)
 
-        self.piezas_pos = [{"img": "alfil.png", "top": 0, "left": 50}]
+        # crear archivo serializado
+        self.position_indicators = ft.Stack()
+        with open('indicator_list.pkl', 'rb') as file:
+            self.indicator_l = pickle.load(file)
 
         self.tablero = ft.Stack(
             [Celda(i["color"], i["top"], i["left"]) for i in self.tablero_l])
 
+        self.indicators = ft.Stack(
+            [Position_Indicator(i["top"], i["left"], i["id"])
+             for i in self.indicator_l]
+        )
         self.piezas = ft.Stack(
             [Pieza(i["img"], i["top"], i["left"]) for i in self.piezas_pos])
 
+        self.c_player = C_Player(self.current_player)
+
         self.tablero = ft.Stack(
             [
+                self.indicators,
                 self.tablero,
-                self.piezas
+                self.piezas,
+                self.c_player,
+                ft.Container(
+                    content=ft.ElevatedButton(
+                        bgcolor=ft.colors.PURPLE_400, color="white", icon="refresh", text="Undo move", on_click=self.undo_move),
+                    top=0,
+                    left=1000
+                ),
+                ft.Container(
+                    content=ft.ElevatedButton(
+                        bgcolor=ft.colors.PURPLE_400, color="white", icon="SWITCH_ACCESS_SHORTCUT_SHARP", text="Switch turn", on_click=self.switch_turn),
+                    top=50,
+                    left=0
+                )
             ]
         )
 
+    def switch_turn(self, e):
+        if self.turno == 0:
+            self.turno = 3
+        else:
+            self.turno -= 1
+
+        self.current_player.value = self.players[self.turno]
+        self.c_player.bgcolor = self.players[self.turno]
+        self.update()
+
+    def undo_move(self, e):
+        if self.undo_times > 0:
+            return
+
+        self.piezas_pos = []
+        for p in self.undo_positions:
+            for i in range(len(self.tablero_l)):
+                if p["id"] == self.tablero_l[i]["id"]:
+                    top = self.tablero_l[i]["top"]
+                    left = self.tablero_l[i]["left"]
+                    img = "../sources/" + p["img"] + ".png"
+                    break
+            self.piezas_pos.append({"img": img, "top": top, "left": left})
+
+        self.piezas.controls = [
+            Pieza(i["img"], i["top"], i["left"]) for i in self.piezas_pos]
+
+        # se actualiza el turno
+        if self.turno == 0:
+            self.turno = 3
+
+        else:
+            self.turno -= 1
+
+        self.current_player.value = self.players[self.turno]
+        self.c_player.bgcolor = self.players[self.turno]
+        self.undo_times += 1
+
+        self.update()
+
     def update_pos(self, positions: list):
-        new_pos = []
+        if not (self.is_different(self.prev_positions, positions)):
+            return
+
+        # si se ha movido una pieza contamos un turno
+        self.turno += 1
+
+        # al llegar a cuatro volvemos a empezar
+        if self.turno == 4:
+            self.turno = 0
+
+        self.piezas_pos = []
         for p in positions:
             for i in range(len(self.tablero_l)):
                 if p["id"] == self.tablero_l[i]["id"]:
@@ -185,11 +294,38 @@ class Tablero(ft.Stack):
                     left = self.tablero_l[i]["left"]
                     img = "../sources/" + p["img"] + ".png"
                     break
-            new_pos.append({"img": img, "top": top, "left": left})
+            self.piezas_pos.append({"img": img, "top": top, "left": left})
 
+        # antes de actualizar en la interfaz se verifica que todos los jugadores tengan su
+        # rey en el tablero, de no ser asi , piezas_pos debe eliminar todas las piezas de ese jugador
+        # para que ya no se muestren en la interfaz (o mejor solo dejamos las piezas en tablero y ya?), pero se debe asegurar de guardar su puntaje para que no se
+        # vuelva 0 al no tener piezas suyas en el tablero (hacer modificaciones necesarias al codigo)
+
+        # --aqui va--
+
+        # --------------------------------------------------------------#
+
+        # se actualizan las piezas en la interfaz
         self.piezas.controls = [
-            Pieza(i["img"], i["top"], i["left"]) for i in new_pos]
+            Pieza(i["img"], i["top"], i["left"]) for i in self.piezas_pos]
+
+        self.current_player.value = self.players[self.turno]
+        self.c_player.bgcolor = self.players[self.turno]
+
+        # antes de que prev se actualice se guarda en undo
+        self.undo_positions = self.prev_positions
+
+        # se reinicia el contador de deshacer
+        self.undo_times = 0
+
+        # prev se actualiza
+        self.prev_positions = positions
+
         self.update()
+
+    # para saber si se ha movido una pieza
+    def is_different(self, prev, new):
+        return prev != new
 
     def build(self) -> ft.Stack:
         return self.tablero
@@ -213,46 +349,22 @@ class Scores(ft.Column):
                         font_family="BigBlueTerm437 Nerd Font"),
                 ft.Row(
                     [
-                        ft.Container(
-                            content=self.s_blue,
-                            bgcolor="blue",
-                            width=200,
-                            height=30,
-                            border_radius=5
-                        )
+                        Scorevalue("blue", self.s_blue)
                     ]
                 ),
                 ft.Row(
                     [
-                        ft.Container(
-                            content=self.s_yellow,
-                            bgcolor="yellow",
-                            width=200,
-                            height=30,
-                            border_radius=5
-                        )
+                        Scorevalue("#ffc400", self.s_yellow)
                     ]
                 ),
                 ft.Row(
                     [
-                        ft.Container(
-                            content=self.s_black,
-                            bgcolor="black",
-                            width=200,
-                            height=30,
-                            border_radius=5
-                        )
+                        Scorevalue("black", self.s_black)
                     ]
                 ),
                 ft.Row(
                     [
-                        ft.Container(
-                            content=self.s_red,
-                            bgcolor="red",
-                            width=200,
-                            height=30,
-                            border_radius=5
-                        )
+                        Scorevalue("red", self.s_red)
                     ]
                 )
             ]
