@@ -184,6 +184,9 @@ class Tablero(ft.Stack):
     def __init__(self) -> None:
         super().__init__()
         self.players = ["red", "blue", "black", "yellow"]
+        self.tableros = ["tablero_list.pkl", "tablero_list2.pkl",
+                         "tablero_list3.pkl", "tablero_list4.pkl"]
+        self.tablero_actual = 0
         self.turno = 0
         self.piezas_pos = []
         self.prev_positions = []
@@ -194,15 +197,14 @@ class Tablero(ft.Stack):
             self.players[self.turno], size=20, color="white", weight=ft.FontWeight.W_500, text_align=ft.TextAlign.CENTER)
 
         self.piezas = ft.Stack()
-        with open('tablero_list.pkl', 'rb') as file:
+        with open(self.tableros[self.tablero_actual], 'rb') as file:
             self.tablero_l = pickle.load(file)
 
-        # crear archivo serializado
         self.position_indicators = ft.Stack()
         with open('indicator_list.pkl', 'rb') as file:
             self.indicator_l = pickle.load(file)
 
-        self.tablero = ft.Stack(
+        self.celdas = ft.Stack(
             [Celda(i["color"], i["top"], i["left"]) for i in self.tablero_l])
 
         self.indicators = ft.Stack(
@@ -217,7 +219,7 @@ class Tablero(ft.Stack):
         self.tablero = ft.Stack(
             [
                 self.indicators,
-                self.tablero,
+                self.celdas,
                 self.piezas,
                 self.c_player,
                 ft.Container(
@@ -326,6 +328,20 @@ class Tablero(ft.Stack):
     # para saber si se ha movido una pieza
     def is_different(self, prev, new):
         return prev != new
+
+    def rotate_board(self, e):
+        if self.tablero_actual == 3:
+            self.tablero_actual = 0
+        else:
+            self.tablero_actual += 1
+
+        with open(self.tableros[self.tablero_actual], 'rb') as file:
+            self.tablero_l = pickle.load(file)
+
+        self.celdas.controls = [
+            Celda(i["color"], i["top"], i["left"]) for i in self.tablero_l]
+
+        self.update()
 
     def build(self) -> ft.Stack:
         return self.tablero

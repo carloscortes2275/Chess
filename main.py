@@ -10,7 +10,6 @@ def update(new_pos):
     scores.update_scores(new_pos)
 
 def main(page: ft.Page):
-
     page.title = "AI Chess"
     page.vertical_alignment = ft.MainAxisAlignment.START
     page.horizontal_alignment = ft.MainAxisAlignment.START
@@ -148,6 +147,11 @@ def main(page: ft.Page):
                     ),
                         ft.Container(
                             ft.IconButton(icon="remove", on_click=zoom_out, width=35, height=35, icon_color=ft.colors.WHITE),
+                            bgcolor=ft.colors.BLUE_500,
+                            border_radius=10,
+                        ),
+                        ft.Container(
+                            ft.IconButton(icon="ROTATE_90_DEGREES_CW_OUTLINED", on_click=tablero.rotate_board, width=35, height=35, icon_color=ft.colors.WHITE),
                             bgcolor=ft.colors.BLUE_500,
                             border_radius=10,
                         )
