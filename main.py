@@ -18,13 +18,12 @@ def main(page: ft.Page):
     page.vertical_alignment = ft.MainAxisAlignment.START
     page.horizontal_alignment = ft.MainAxisAlignment.START
     page.window_maximized = True
+    window_width = page.window_width
+    window_height = page.window_height
+    page.window_full_screen = True
     page.scroll = True
     menu = Menu()
 
-    # Obtener el tamaño de la pantalla
-    window_width = page.window_width
-    window_height = page.window_height
-    print(window_width, window_height)
     # Ejemplo de las posiciones obtenidas de la IA (sirve para calcular los scores de las piezas y
     # mostrarlas las piezas en la interfaz gráfica)
 
@@ -89,13 +88,11 @@ def main(page: ft.Page):
         {"id": "D11", "img": "AZ"},
         {"id": "E13", "img": "PN"},
         {"id": "G6", "img": "PA"},
-        #{"id": "F12", "img": "TR"},
-        #{"id": "G13", "img": "QA"},
         {"id": "D1", "img": "KZ"},
-        {"id": "E4", "img": "KN"},
         {"id": "F1", "img": "KR"},
         {"id": "G1", "img": "KA"},
-        {"id": "H14", "img": "QZ"}
+        {"id": "H14", "img": "QZ"},
+        {"id": "F4", "img": "PN"}
     ]
 
     def zoom_in(e):
@@ -108,6 +105,14 @@ def main(page: ft.Page):
         app.scale -= 0.1
         page.update()
 
+    def exit_game(e):
+        page.window_close()
+
+    def full_screen(e):
+        page.window_full_screen = not page.window_full_screen
+        page.update()
+
+    
     app = ft.Row(
         [
             ft.Column(
@@ -145,32 +150,68 @@ def main(page: ft.Page):
         scale=1
     )
 
+    app_exit_btn = ft.Container(
+        ft.IconButton(icon="close", on_click=exit_game, width=35,
+                      height=35, icon_color=ft.colors.WHITE),
+        bgcolor=ft.colors.RED_500,
+        border_radius=10,
+    )
+
+    app_minimize_btn = ft.Container(
+        ft.IconButton(icon="FULLSCREEN_EXIT", on_click=full_screen,
+                      width=35, height=35, icon_color=ft.colors.WHITE),
+        bgcolor=ft.colors.BLUE_500,
+        border_radius=10,
+    )
+
     app_bar = ft.Container(
         ft.Row(
-        [ft.TextButton(text="+", on_click=zoom_in, width=35, height=35,),
-         ft.TextButton(text="-",on_click=zoom_out,width=35,height=35)],spacing=0.75),
-         bgcolor=ft.colors.GREY_100,
-         border_radius=10,
+            [
+                ft.Row(
+                    [ft.Container(
+                        ft.IconButton(icon="ADD", on_click=zoom_in, width=35, height=35, icon_color=ft.colors.WHITE),
+                        bgcolor=ft.colors.BLUE_500,
+                        border_radius=10,
+                    ),
+                        ft.Container(
+                            ft.IconButton(icon="remove", on_click=zoom_out, width=35, height=35, icon_color=ft.colors.WHITE),
+                            bgcolor=ft.colors.BLUE_500,
+                            border_radius=10,
+                        ),
+                        ft.Container(
+                            ft.IconButton(icon="ROTATE_90_DEGREES_CW_OUTLINED", on_click=tablero.rotate_board, width=35, height=35, icon_color=ft.colors.WHITE),
+                            bgcolor=ft.colors.BLUE_500,
+                            border_radius=10,
+                        )
+                    ],spacing=1),
+                ft.Row([app_minimize_btn,
+                        app_exit_btn],
+                        alignment=ft.MainAxisAlignment.END,
+                        spacing=1)
+            ],
+            alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+        ),
+        bgcolor=ft.colors.GREY_100,
+        border_radius=10,
     )
 
     page.add(app_bar, app)
-
     # Después de ciertos segundos se mueven las piezas a las posiciones especificadas
     # simulamos el paso de los turnos
 
     time.sleep(1)
     update(new_pos=new_pos)
 
-    time.sleep(5)
+    time.sleep(1)
     update(new_pos=new_pos2)
 
-    time.sleep(5)
+    time.sleep(1)
     update(new_pos=new_pos3)
 
-    time.sleep(5)
+    time.sleep(1)
     update(new_pos=new_pos4)
 
-    time.sleep(5)
+    time.sleep(1)
     update(new_pos=new_pos5)
 
 

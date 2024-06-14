@@ -184,6 +184,9 @@ class Tablero(ft.Stack):
     def __init__(self) -> None:
         super().__init__()
         self.players = ["red", "blue", "black", "yellow"]
+        self.tableros = ["tablero_list.pkl", "tablero_list2.pkl",
+        "tablero_list3.pkl", "tablero_list4.pkl"]
+        self.tablero_actual = 0
         self.turno = 0
         self.piezas_pos = []
         self.prev_positions = []
@@ -206,7 +209,7 @@ class Tablero(ft.Stack):
         with open('indicator_list.pkl', 'rb') as file:
             self.indicator_l = pickle.load(file)
 
-        self.tablero = ft.Stack(
+        self.celdas = ft.Stack(
             [Celda(i["color"], i["top"], i["left"]) for i in self.tablero_l])
 
         self.indicators = ft.Stack(
@@ -221,7 +224,7 @@ class Tablero(ft.Stack):
         self.tablero = ft.Stack(
             [
                 self.indicators,
-                self.tablero,
+                self.celdas,
                 self.piezas,
                 self.c_player,
                 ft.Container(
@@ -264,6 +267,8 @@ class Tablero(ft.Stack):
         self.turno = initial_turno
         print("Todos los jugadores están eliminados. No se puede cambiar el turno.")  # Debug
 
+
+    #agregar recalcular el score
     def undo_move(self, e):
         if self.undo_times > 0:
             return
@@ -299,8 +304,7 @@ class Tablero(ft.Stack):
             return
 
         positions = self.filter_out_eliminated_players(positions)
-        
-        initial_turno = self.turno
+
         for _ in range(len(self.players)):  # Para asegurar que no entre en un bucle infinito
             self.turno = (self.turno + 1) % len(self.players)
             print(f"Intentando cambiar a turno: {self.turno} ({self.players[self.turno]})")  # Debug
@@ -334,6 +338,21 @@ class Tablero(ft.Stack):
     def is_different(self, prev, new):
         return prev != new
 
+    def rotate_board(self, e):
+        if self.tablero_actual == 3:
+            self.tablero_actual = 0
+        else:
+            self.tablero_actual += 1
+
+        with open(self.tableros[self.tablero_actual], 'rb') as file:
+            self.tablero_l = pickle.load(file)
+
+        self.celdas.controls = [
+            Celda(i["color"], i["top"], i["left"]) for i in self.tablero_l]
+
+        self.update()
+
+
     def filter_out_eliminated_players(self, posiciones_piezas):
         # Encontrar jugadores que todavía tienen rey
         jugadores_con_rey = set()
@@ -359,7 +378,6 @@ class Tablero(ft.Stack):
         # Filtrar piezas para eliminar las de los jugadores eliminados
         piezas_pos = [p for p in posiciones_piezas if p["img"][1] not in self.eliminated_players]
 
-
         return piezas_pos
 
     def color_to_player(self, color):
@@ -373,11 +391,6 @@ class Tablero(ft.Stack):
 
     def build(self) -> ft.Stack:
         return self.tablero
-
-
-
-
-
 
 
 class Scores(ft.Column):
