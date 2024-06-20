@@ -180,219 +180,6 @@ class Scorevalue(ft.Container):
         return self
 
 
-class Tablero(ft.Stack):
-    def __init__(self) -> None:
-        super().__init__()
-        self.players = ["red", "blue", "black", "yellow"]
-        self.tableros = ["tablero_list.pkl", "tablero_list2.pkl",
-        "tablero_list3.pkl", "tablero_list4.pkl"]
-        self.tablero_actual = 0
-        self.turno = 0
-        self.piezas_pos = []
-        self.prev_positions = []
-        self.undo_positions = []
-        self.undo_times = 0
-
-        self.scores = {player: 0 for player in self.players}
-        self.eliminated_scores = {player: None for player in self.players}  # Para guardar las puntuaciones de los jugadores eliminados
-        self.eliminated_players = set()  # Para rastrear jugadores eliminados
-        self.active_players = set(self.players)  # Para rastrear jugadores activos con rey
-
-        self.current_player = ft.Text(
-            self.players[self.turno], size=20, color="white", weight=ft.FontWeight.W_500, text_align=ft.TextAlign.CENTER)
-
-        self.piezas = ft.Stack()
-        with open('tablero_list.pkl', 'rb') as file:
-            self.tablero_l = pickle.load(file)
-
-        self.position_indicators = ft.Stack()
-        with open('indicator_list.pkl', 'rb') as file:
-            self.indicator_l = pickle.load(file)
-
-        self.celdas = ft.Stack(
-            [Celda(i["color"], i["top"], i["left"]) for i in self.tablero_l])
-
-        self.indicators = ft.Stack(
-            [Position_Indicator(i["top"], i["left"], i["id"])
-             for i in self.indicator_l]
-        )
-        self.piezas = ft.Stack(
-            [Pieza(i["img"], i["top"], i["left"]) for i in self.piezas_pos])
-
-        self.c_player = C_Player(self.current_player)
-
-        self.tablero = ft.Stack(
-            [
-                self.indicators,
-                self.celdas,
-                self.piezas,
-                self.c_player,
-                ft.Container(
-                    content=ft.ElevatedButton(
-                        bgcolor=ft.colors.PURPLE_400, color="white", icon="refresh", text="Undo move", on_click=self.undo_move),
-                    top=0,
-                    left=1000
-                ),
-                ft.Container(
-                    content=ft.ElevatedButton(
-                        bgcolor=ft.colors.PURPLE_400, color="white", icon="SWITCH_ACCESS_SHORTCUT_SHARP", text="Switch turn", on_click=self.switch_turn),
-                    top=50,
-                    left=0
-                )
-            ]
-        )
-        self.initial_scores = {player: 0 for player in self.players}
-
-    def save_initial_scores(self):
-        self.initial_scores = self.scores.copy()
-
-    def restore_scores(self, player):
-        if player in self.eliminated_scores:
-            self.scores[player] = self.eliminated_scores[player]
-        else:
-            self.scores[player] = self.initial_scores[player]
-
-    def switch_turn(self, e=None):
-        initial_turno = self.turno
-        for _ in range(len(self.players)):
-            self.turno = (self.turno + 1) % len(self.players)
-            print(f"Intentando cambiar a turno: {self.turno} ({self.players[self.turno]})")  # Debug
-            if self.players[self.turno] in self.active_players:
-                print(f"Nuevo turno: {self.turno} ({self.players[self.turno]})")  # Debug
-                self.current_player.value = self.players[self.turno]
-                self.c_player.bgcolor = self.players[self.turno]
-                self.update()
-                return
-        # Si todos los jugadores están eliminados, no cambiar el turno
-        self.turno = initial_turno
-        print("Todos los jugadores están eliminados. No se puede cambiar el turno.")  # Debug
-
-
-    #agregar recalcular el score
-    def undo_move(self, e):
-        if self.undo_times > 0:
-            return
-
-        self.piezas_pos = []
-        for p in self.undo_positions:
-            for i in range(len(self.tablero_l)):
-                if p["id"] == self.tablero_l[i]["id"]:
-                    top = self.tablero_l[i]["top"]
-                    left = self.tablero_l[i]["left"]
-                    img = "../sources/" + p["img"] + ".png"
-                    break
-            self.piezas_pos.append({"img": img, "top": top, "left": left})
-
-        self.piezas.controls = [
-            Pieza(i["img"], i["top"], i["left"]) for i in self.piezas_pos]
-
-        # se actualiza el turno
-        if self.turno == 0:
-            self.turno = 3
-
-        else:
-            self.turno -= 1
-
-        self.current_player.value = self.players[self.turno]
-        self.c_player.bgcolor = self.players[self.turno]
-        self.undo_times += 1
-
-        self.update()
-
-    def update_pos(self, positions: list):
-        if not self.is_different(self.prev_positions, positions):
-            return
-
-        positions = self.filter_out_eliminated_players(positions)
-
-        for _ in range(len(self.players)):  # Para asegurar que no entre en un bucle infinito
-            self.turno = (self.turno + 1) % len(self.players)
-            print(f"Intentando cambiar a turno: {self.turno} ({self.players[self.turno]})")  # Debug
-            if self.players[self.turno] in self.active_players:
-                break
-        print(f"Nuevo turno: {self.turno} ({self.players[self.turno]})")  # Debug
-
-        self.piezas_pos = []
-        for p in positions:
-            for i in range(len(self.tablero_l)):
-                if p["id"] == self.tablero_l[i]["id"]:
-                    top = self.tablero_l[i]["top"]
-                    left = self.tablero_l[i]["left"]
-                    img = "../sources/" + p["img"] + ".png"
-                    break
-            self.piezas_pos.append({"img": img, "top": top, "left": left})
-
-        self.piezas.controls = [
-            Pieza(i["img"], i["top"], i["left"]) for i in self.piezas_pos
-        ]
-
-        self.current_player.value = self.players[self.turno]
-        self.c_player.bgcolor = self.players[self.turno]
-
-        self.undo_positions = self.prev_positions
-        self.undo_times = 0
-        self.prev_positions = positions
-
-        self.update()
-
-    def is_different(self, prev, new):
-        return prev != new
-
-    def rotate_board(self, e):
-        if self.tablero_actual == 3:
-            self.tablero_actual = 0
-        else:
-            self.tablero_actual += 1
-
-        with open(self.tableros[self.tablero_actual], 'rb') as file:
-            self.tablero_l = pickle.load(file)
-
-        self.celdas.controls = [
-            Celda(i["color"], i["top"], i["left"]) for i in self.tablero_l]
-
-        self.update()
-
-
-    def filter_out_eliminated_players(self, posiciones_piezas):
-        # Encontrar jugadores que todavía tienen rey
-        jugadores_con_rey = set()
-        for pieza in posiciones_piezas:
-            if pieza["img"][0] == "K":  # Verificar si la pieza es un rey
-                jugadores_con_rey.add(pieza["img"][1])  # Añadir color del rey
-
-        print(f"Jugadores con rey: {jugadores_con_rey}")  # Debug
-
-        # Actualizar la lista de jugadores activos
-        self.active_players = {self.color_to_player(color) for color in jugadores_con_rey}
-        print(f"Jugadores activos: {self.active_players}")  # Debug
-
-        # Identificar jugadores eliminados y guardar sus puntuaciones
-        for jugador in self.players:
-            if jugador not in self.active_players and jugador not in self.eliminated_players:
-                self.eliminated_players.add(jugador)
-                self.eliminated_scores[jugador] = self.scores[jugador]
-                print(f"Jugador eliminado: {jugador}")  # Debug
-
-        print(f"Jugadores eliminados: {self.eliminated_players}")  # Debug
-
-        # Filtrar piezas para eliminar las de los jugadores eliminados
-        piezas_pos = [p for p in posiciones_piezas if p["img"][1] not in self.eliminated_players]
-
-        return piezas_pos
-
-    def color_to_player(self, color):
-        color_map = {
-            'Z': 'blue',
-            'R': 'red',
-            'N': 'black',
-            'A': 'yellow'
-        }
-        return color_map[color]
-
-    def build(self) -> ft.Stack:
-        return self.tablero
-
-
 class Scores(ft.Column):
     def __init__(self) -> None:
         super().__init__()
@@ -476,3 +263,209 @@ class Scores(ft.Column):
                 self.eliminated_scores[color] = scores[color]
 
         return scores
+
+
+class Tablero(ft.Stack):
+    def __init__(self, scores: Scores) -> None:
+        super().__init__()
+        self.players = ["red", "blue", "black", "yellow"]
+        self.tableros = ["tablero_list.pkl", "tablero_list2.pkl",
+                         "tablero_list3.pkl", "tablero_list4.pkl"]
+        self.tablero_actual = 0
+        self.turno = 0
+        self.piezas_pos = []
+        self.prev_positions = []
+        self.undo_positions = []
+        self.undo_times = 0
+        self.scores_table = scores
+        self.scores = {player: 0 for player in self.players}
+        # Para guardar las puntuaciones de los jugadores eliminados
+        self.eliminated_scores = {player: None for player in self.players}
+        self.eliminated_players = set()  # Para rastrear jugadores eliminados
+        # Para rastrear jugadores activos con rey
+        self.active_players = set(self.players)
+
+        self.current_player = ft.Text(
+            self.players[self.turno], size=20, color="white", weight=ft.FontWeight.W_500, text_align=ft.TextAlign.CENTER)
+
+        self.piezas = ft.Stack()
+        with open('tablero_list.pkl', 'rb') as file:
+            self.tablero_l = pickle.load(file)
+
+        self.position_indicators = ft.Stack()
+        with open('indicator_list.pkl', 'rb') as file:
+            self.indicator_l = pickle.load(file)
+
+        self.celdas = ft.Stack(
+            [Celda(i["color"], i["top"], i["left"]) for i in self.tablero_l])
+
+        self.indicators = ft.Stack(
+            [Position_Indicator(i["top"], i["left"], i["id"])
+             for i in self.indicator_l]
+        )
+        self.piezas = ft.Stack(
+            [Pieza(i["img"], i["top"], i["left"]) for i in self.piezas_pos])
+
+        self.c_player = C_Player(self.current_player)
+
+        self.tablero = ft.Stack(
+            [
+                self.indicators,
+                self.celdas,
+                self.piezas,
+                self.c_player,
+                ft.Container(
+                    content=ft.ElevatedButton(
+                        bgcolor=ft.colors.PURPLE_400, color="white", icon="refresh", text="Undo move", on_click=self.undo_move),
+                    top=0,
+                    left=1000
+                ),
+                ft.Container(
+                    content=ft.ElevatedButton(
+                        bgcolor=ft.colors.PURPLE_400, color="white", icon="SWITCH_ACCESS_SHORTCUT_SHARP", text="Switch turn", on_click=self.switch_turn),
+                    top=50,
+                    left=0
+                )
+            ]
+        )
+        self.initial_scores = {player: 0 for player in self.players}
+
+    def save_initial_scores(self):
+        self.initial_scores = self.scores.copy()
+
+    def restore_scores(self, player):
+        if player in self.eliminated_scores:
+            self.scores[player] = self.eliminated_scores[player]
+        else:
+            self.scores[player] = self.initial_scores[player]
+
+    def switch_turn(self, e=None):
+        initial_turno = self.turno
+        for _ in range(len(self.players)):
+            self.turno = (self.turno + 1) % len(self.players)
+            # print(f"Intentando cambiar a turno: {self.turno} ({self.players[self.turno]})")  # Debug
+            if self.players[self.turno] in self.active_players:
+                # print(f"Nuevo turno: {self.turno} ({self.players[self.turno]})")  # Debug
+                self.current_player.value = self.players[self.turno]
+                self.c_player.bgcolor = self.players[self.turno]
+                self.update()
+                return
+        # Si todos los jugadores están eliminados, no cambiar el turno
+        self.turno = initial_turno
+        # print("Todos los jugadores están eliminados. No se puede cambiar el turno.")  # Debug
+
+    def undo_move(self, e):
+        if self.undo_times > 0:
+            return
+
+        self.undo_positions = self.filter_out_eliminated_players(
+            self.undo_positions)
+        self.scores_table.update_scores(self.undo_positions)
+        self.update_pos(self.undo_positions)
+        print(f'scores despues de undo: {self.scores_table.scores}')
+
+        # se actualiza el turno
+        if self.turno == 0:
+            self.turno = 3
+
+        else:
+            self.turno -= 1
+
+        self.current_player.value = self.players[self.turno]
+        self.c_player.bgcolor = self.players[self.turno]
+        self.undo_times += 1
+
+        self.update()
+
+    def update_pos(self, positions: list):
+        if not self.is_different(self.prev_positions, positions):
+            return
+        positions = self.filter_out_eliminated_players(positions)
+
+        # Para asegurar que no entre en un bucle infinito
+        for _ in range(len(self.players)):
+            self.turno = (self.turno + 1) % len(self.players)
+            # print(f"Intentando cambiar a turno: {self.turno} ({self.players[self.turno]})")  # Debug
+            if self.players[self.turno] in self.active_players:
+                break
+        # print(f"Nuevo turno: {self.turno} ({self.players[self.turno]})")  # Debug
+
+        self.piezas_pos = []
+        for p in positions:
+            for i in range(len(self.tablero_l)):
+                if p["id"] == self.tablero_l[i]["id"]:
+                    top = self.tablero_l[i]["top"]
+                    left = self.tablero_l[i]["left"]
+                    img = "../sources/" + p["img"] + ".png"
+                    break
+            self.piezas_pos.append({"img": img, "top": top, "left": left})
+
+        self.piezas.controls = [
+            Pieza(i["img"], i["top"], i["left"]) for i in self.piezas_pos
+        ]
+
+        self.current_player.value = self.players[self.turno]
+        self.c_player.bgcolor = self.players[self.turno]
+        self.undo_positions = self.prev_positions
+        self.undo_times = 0
+        self.prev_positions = positions
+
+        self.update()
+
+    def is_different(self, prev, new):
+        return prev != new
+
+    def rotate_board(self, e):
+        if self.tablero_actual == 3:
+            self.tablero_actual = 0
+        else:
+            self.tablero_actual += 1
+
+        with open(self.tableros[self.tablero_actual], 'rb') as file:
+            self.tablero_l = pickle.load(file)
+
+        self.celdas.controls = [
+            Celda(i["color"], i["top"], i["left"]) for i in self.tablero_l]
+
+        self.update()
+
+    def filter_out_eliminated_players(self, posiciones_piezas):
+
+        # Encontrar jugadores que todavía tienen rey
+        jugadores_con_rey = set()
+        for pieza in posiciones_piezas:
+            if pieza["img"][0] == "K":  # Verificar si la pieza es un rey
+                jugadores_con_rey.add(pieza["img"][1])  # Añadir color del rey
+
+        # print(f"Jugadores con rey: {jugadores_con_rey}")  # Debug
+
+        # Actualizar la lista de jugadores activos
+        self.active_players = {self.color_to_player(
+            color) for color in jugadores_con_rey}
+        # print(f"Jugadores activos: {self.active_players}")  # Debug
+
+        # Identificar jugadores eliminados y guardar sus puntuaciones
+        for jugador in self.players:
+            if jugador not in self.active_players and jugador not in self.eliminated_players:
+                self.eliminated_players.add(jugador)
+                self.eliminated_scores[jugador] = self.scores[jugador]
+                # print(f"Jugador eliminado: {jugador}")  # Debug
+
+        # print(f"Jugadores eliminados: {self.eliminated_players}")  # Debug
+        # Filtrar piezas para eliminar las de los jugadores eliminados
+        piezas_pos = [p for p in posiciones_piezas if p["img"]
+                      [1] not in self.eliminated_players]
+
+        return piezas_pos
+
+    def color_to_player(self, color):
+        color_map = {
+            'Z': 'blue',
+            'R': 'red',
+            'N': 'black',
+            'A': 'yellow'
+        }
+        return color_map[color]
+
+    def build(self) -> ft.Stack:
+        return self.tablero

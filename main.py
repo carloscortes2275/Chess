@@ -1,16 +1,39 @@
 from components import *
+import tensorflow as tf
 import flet as ft
 import time
 
-tablero = Tablero()
 scores = Scores()
+tablero = Tablero(scores=scores)
+ 
+# yellow
+new_pos4 = [
+        {"id": "D12", "img": "AZ"},
+        {"id": "E13", "img": "PN"},
+        {"id": "G6", "img": "PA"},
+        {"id": "F13", "img": "TR"},
+        {"id": "G13", "img": "QA"},
+        {"id": "D1", "img": "KZ"},
+        #{"id": "E3", "img": "KN"},
+        {"id": "F1", "img": "KR"},
+        {"id": "G1", "img": "KA"},
+        {"id": "H14", "img": "QZ"},
+        {"id": "H13", "img": "QZ"}
+    ]
 
-
-def update(new_pos):
-    new_pos_filtered = tablero.filter_out_eliminated_players(new_pos)
-    tablero.update_pos(new_pos_filtered)
-    scores.update_scores(new_pos_filtered)
-
+# red
+new_pos5 = [
+        {"id": "D11", "img": "AZ"},
+        {"id": "E13", "img": "PN"},
+        {"id": "G6", "img": "PA"},
+        #{"id": "F12", "img": "TR"},
+        #{"id": "G13", "img": "QA"},
+        {"id": "D1", "img": "KZ"},
+        {"id": "E4", "img": "KN"},
+        {"id": "F1", "img": "KR"},
+        {"id": "G1", "img": "KA"},
+        {"id": "H14", "img": "QZ"}
+    ]
 
 def main(page: ft.Page):
 
@@ -24,76 +47,11 @@ def main(page: ft.Page):
     page.scroll = True
     menu = Menu()
 
-    # Ejemplo de las posiciones obtenidas de la IA (sirve para calcular los scores de las piezas y
-    # mostrarlas las piezas en la interfaz gráfica)
-
-    # red
-    new_pos = [
-        {"id": "D14", "img": "AZ"},
-        {"id": "E14", "img": "PN"},
-        {"id": "G6", "img": "PA"},
-        {"id": "F13", "img": "TR"},
-        {"id": "G14", "img": "QA"},
-        {"id": "D1", "img": "KZ"},
-        {"id": "E1", "img": "KN"},
-        {"id": "F1", "img": "KR"},
-        {"id": "G1", "img": "KA"},
-        {"id": "H14", "img": "QZ"}
-    ]
-
-    # blue
-    new_pos2 = [
-        {"id": "D13", "img": "AZ"},
-        {"id": "E14", "img": "PN"},
-        {"id": "G6", "img": "PA"},
-        {"id": "F13", "img": "TR"},
-        {"id": "G14", "img": "QA"},
-        {"id": "D1", "img": "KZ"},
-        {"id": "E1", "img": "KN"},
-        {"id": "F1", "img": "KR"},
-        {"id": "G1", "img": "KA"},
-        {"id": "H14", "img": "QZ"}
-    ]
-
-    # black
-    new_pos3 = [
-        {"id": "D14", "img": "AZ"},
-        {"id": "E14", "img": "PN"},
-        {"id": "G6", "img": "PA"},
-        {"id": "F13", "img": "TR"},
-        {"id": "G14", "img": "QA"},
-        {"id": "D1", "img": "KZ"},
-        {"id": "E1", "img": "KN"},
-        {"id": "F1", "img": "KR"},
-        {"id": "G1", "img": "KA"},
-        {"id": "H14", "img": "QZ"}
-    ]
-
-    # yellow
-    new_pos4 = [
-        {"id": "D12", "img": "AZ"},
-        {"id": "E13", "img": "PN"},
-        {"id": "G6", "img": "PA"},
-        {"id": "F13", "img": "TR"},
-        {"id": "G13", "img": "QA"},
-        {"id": "D1", "img": "KZ"},
-        {"id": "E3", "img": "KN"},
-        {"id": "F1", "img": "KR"},
-        {"id": "G1", "img": "KA"},
-        {"id": "H14", "img": "QZ"}
-    ]
-
-    # red
-    new_pos5 = [
-        {"id": "D11", "img": "AZ"},
-        {"id": "E13", "img": "PN"},
-        {"id": "G6", "img": "PA"},
-        {"id": "D1", "img": "KZ"},
-        {"id": "F1", "img": "KR"},
-        {"id": "G1", "img": "KA"},
-        {"id": "H14", "img": "QZ"},
-        {"id": "F4", "img": "PN"}
-    ]
+    def update(new_pos):
+        if new_pos is not None:
+            new_pos_filtered = tablero.filter_out_eliminated_players(new_pos)
+            tablero.update_pos(new_pos_filtered)
+            scores.update_scores(new_pos_filtered)
 
     def zoom_in(e):
         if app.scale >= 1:
@@ -196,24 +154,15 @@ def main(page: ft.Page):
     )
 
     page.add(app_bar, app)
-    # Después de ciertos segundos se mueven las piezas a las posiciones especificadas
-    # simulamos el paso de los turnos
+    
+   #aqui accedemos a la lista de las piezas cada cierto tiempo para actualizarlas con update en la interfaz
+    # while True:
+    #     new_pos = menu.connection.cam.get_pieces()
+    #     update(new_pos)
+    #     time.sleep(15)
 
+    update(new_pos4)
     time.sleep(1)
-    update(new_pos=new_pos)
-
-    time.sleep(1)
-    update(new_pos=new_pos2)
-
-    time.sleep(1)
-    update(new_pos=new_pos3)
-
-    time.sleep(1)
-    update(new_pos=new_pos4)
-
-    time.sleep(1)
-    update(new_pos=new_pos5)
-
+    update(new_pos5)
 
 ft.app(target=main)
-# ft.app(target=main, view=ft.AppView.WEB_BROWSER)
