@@ -4,13 +4,13 @@ import pickle
 
 
 class Conn_camera(ft.Row):
-    def __init__(self, title: str) -> None:
+    def __init__(self, title: str, fn_update) -> None:
         super().__init__()
         self.txt_ip = ft.TextField(
             value=None, width=200, color="blue", disabled=self.disabled)
         self.port = ft.TextField(
             value=8080, width=200, color="blue", disabled=self.disabled)
-        self.cam = Camera()
+        self.cam = Camera(fn_update=fn_update)
         self.title = title
         self.disabled = False
         self.is_transmitting = False
@@ -68,10 +68,10 @@ class Conn_camera(ft.Row):
 
 
 class Menu(ft.Row):
-    def __init__(self) -> None:
+    def __init__(self, fn_update) -> None:
         super().__init__()
         self.text = ft.Text("Menu")
-        self.connection = Conn_camera("IP adress :")
+        self.connection = Conn_camera("IP adress :", fn_update)
         self.rail = ft.NavigationRail(
             selected_index=0,
             width=50,
