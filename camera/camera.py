@@ -3,8 +3,10 @@ import tensorflow as tf
 import numpy as np
 import threading
 import time
+import concurrent.futures
 
-#cambiar por un modelo mas rapido y preciso , media de actualizacion actual es de 10s
+#cambiar por un modelo mas rapido,preciso y ligero
+#media de actualizacion paralelizando el procesamiento de las filas es de 4 segundos
 modelo = tf.keras.models.load_model('modelv3_4.keras')
 
 diccionario = {
@@ -69,8 +71,6 @@ columnas = {
     13: 'N'
 }
 
-null_positions = [0, 1, 2, 11, 12, 13]
-
 
 class Camera:
     def __init__(self, fn_update):
@@ -78,6 +78,7 @@ class Camera:
         self.usb = False
         self.piezas = []
         self.fn_update = fn_update
+        self.null_positions = [0, 1, 2, 11, 12, 13]
 
     def mostrar_video(self):
         cuadro_ancho = 50  # 57
@@ -103,30 +104,37 @@ class Camera:
                 break
 
             # Redimensionar el frame al tamaño esperado
-            frame = cv2.resize(
-                frame, (cuadro_ancho * divisiones_x, cuadro_alto * divisiones_y))
+            frame = cv2.resize(frame, (cuadro_ancho * divisiones_x, cuadro_alto * divisiones_y))
 
-            # Dibujar el grid en el frame
-            self.dibujar_grid(frame, cuadros, margen=5)
+            # grid_thread = threading.Thread(target=self.show_grid, args=(frame,cuadros,))
+            # grid_thread.start()
+            # grid_thread.join()  # Espera a que termine antes de continuar
+
+            #self.show_grid(frame,cuadros)
 
             start = time.time()
-            # Procesar cada cuadro del grid
-            for i in range(divisiones_y):
-                for j in range(divisiones_x):
-                    # filtramos posiciones nulas
-                    if i in null_positions and j in null_positions:
-                        continue
-                    self.procesar_cuadro(frame, i, j, cuadros, margen=5)
 
-            print(
-                f'Tiempo de procesamiento: {time.time() - start:.2f} segundos')
+            #cada subproceso se encarga de procesar 2 filas 
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                futures = [
+                executor.submit(self.procesar_porcion, 0, 2, frame, cuadros),
+                executor.submit(self.procesar_porcion, 2, 4, frame, cuadros),
+                executor.submit(self.procesar_porcion, 4, 6, frame, cuadros),
+                executor.submit(self.procesar_porcion, 6, 8, frame, cuadros),
+                executor.submit(self.procesar_porcion, 8, 10, frame, cuadros),
+                executor.submit(self.procesar_porcion, 10, 12, frame, cuadros),
+                executor.submit(self.procesar_porcion, 12, 14, frame, cuadros)
+                ]
+            
+            # Espera a que todas las tareas terminen
+            concurrent.futures.wait(futures)
 
-            # Llamar a la función de saludo en un hilo separado
-            update_thread = threading.Thread(
-                target=self.fn_update, args=(None,))
+            print(f'Tiempo de procesamiento: {time.time() - start:.2f} segundos')
+ 
+            update_thread = threading.Thread(target=self.fn_update, args=(None,))
             update_thread.start()
-            update_thread.join()  # Espera a que termine el saludo antes de continuar
-
+            update_thread.join()  # Espera a que termine antes de continuar
+           
             if self.exit:
                 break
 
@@ -170,6 +178,12 @@ class Camera:
             y = cuadros[i][0][0][1]
             cv2.line(imagen, (0, y),
                      (imagen.shape[1], y), color_linea, grosor_linea)
+            
+    def show_grid(self,frame,cuadros,margen=5):
+            # Dibujar el grid en el frame
+            self.dibujar_grid(frame, cuadros, margen=margen)
+            cv2.imshow('app', frame)
+
 
     def procesar_cuadro(self, imagen, fila, columna, cuadros, margen=5):
         (x1, y1), (x2, y2) = cuadros[fila][columna]
@@ -178,8 +192,6 @@ class Camera:
         x2 -= margen
         y2 -= margen
         cuadro = imagen[y1:y2, x1:x2]
-        # guardamos la imagen
-        # cv2.imwrite(f'./pieces/{fila}_{columna}.jpg', cuadro)
         img = cv2.resize(cuadro, (128, 128))
         img = np.expand_dims(img, axis=0)
         img = img / 255.0
@@ -196,3 +208,10 @@ class Camera:
 
     def clear_pieces(self):
         self.piezas = []
+
+    def procesar_porcion(self,start_i, end_i, frame, cuadros):
+        for i in range(start_i, end_i):
+            for j in range(14):
+                if i in self.null_positions and j in self.null_positions:
+                    continue
+                self.procesar_cuadro(frame, i, j, cuadros, margen=5)

@@ -20,10 +20,6 @@ tablero = Tablero(scores=scores)
 menu = Menu(fn_update=update_game)
 
 
-def hello_world(e):
-    print("Hello World")
-
-
 def main(page: ft.Page):
 
     page.title = "AI Chess"
