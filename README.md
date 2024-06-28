@@ -1,5 +1,5 @@
 # **Chess Game with IA**
-*Version: 0.0.1*
+*Version: 1.20.0*
 
 In this project, with the assistance of a camera, a chess board will be mapped (4 in 1), which, with the help of AI, will be able to recognize the pieces as well as which character they belong to. It will also be taken into account when plays are made, keeping track of a score.
 
