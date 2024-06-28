@@ -5,8 +5,8 @@ import threading
 import time
 import concurrent.futures
 
-#cambiar por un modelo mas rapido,preciso y ligero
-#media de actualizacion paralelizando el procesamiento de las filas es de 4 segundos
+# cambiar por un modelo mas rapido,preciso y ligero
+# media de actualizacion paralelizando el procesamiento de las filas es de 4 segundos
 modelo = tf.keras.models.load_model('modelv3_4.keras')
 
 diccionario = {
@@ -71,7 +71,6 @@ columnas = {
     13: 'N'
 }
 
-
 class Camera:
     def __init__(self, fn_update):
         self.exit = False
@@ -97,6 +96,9 @@ class Camera:
                 fila.append(((x1, y1), (x2, y2)))
             cuadros.append(fila)
 
+        thread_show_grid = threading.Thread(target=self.show_grid, args=(cuadros,))
+        thread_show_grid.start()
+
         while True:
             self.clear_pieces()
             ret, frame = self.cap.read()
@@ -105,36 +107,36 @@ class Camera:
 
             # Redimensionar el frame al tamaño esperado
             frame = cv2.resize(frame, (cuadro_ancho * divisiones_x, cuadro_alto * divisiones_y))
-
-            # grid_thread = threading.Thread(target=self.show_grid, args=(frame,cuadros,))
-            # grid_thread.start()
-            # grid_thread.join()  # Espera a que termine antes de continuar
-
-            #self.show_grid(frame,cuadros)
-
             start = time.time()
 
-            #cada subproceso se encarga de procesar 2 filas 
+            #cada subproceso se encarga de procesar 2 filas
             with concurrent.futures.ThreadPoolExecutor() as executor:
                 futures = [
-                executor.submit(self.procesar_porcion, 0, 2, frame, cuadros),
-                executor.submit(self.procesar_porcion, 2, 4, frame, cuadros),
-                executor.submit(self.procesar_porcion, 4, 6, frame, cuadros),
-                executor.submit(self.procesar_porcion, 6, 8, frame, cuadros),
-                executor.submit(self.procesar_porcion, 8, 10, frame, cuadros),
-                executor.submit(self.procesar_porcion, 10, 12, frame, cuadros),
-                executor.submit(self.procesar_porcion, 12, 14, frame, cuadros)
+                    executor.submit(self.procesar_porcion,
+                                    0, 2, frame, cuadros),
+                    executor.submit(self.procesar_porcion,
+                                    2, 4, frame, cuadros),
+                    executor.submit(self.procesar_porcion,
+                                    4, 6, frame, cuadros),
+                    executor.submit(self.procesar_porcion,
+                                    6, 8, frame, cuadros),
+                    executor.submit(self.procesar_porcion,
+                                    8, 10, frame, cuadros),
+                    executor.submit(self.procesar_porcion,
+                                    10, 12, frame, cuadros),
+                    executor.submit(self.procesar_porcion,
+                                    12, 14, frame, cuadros)
                 ]
-            
+
             # Espera a que todas las tareas terminen
             concurrent.futures.wait(futures)
 
             print(f'Tiempo de procesamiento: {time.time() - start:.2f} segundos')
- 
+
             update_thread = threading.Thread(target=self.fn_update, args=(None,))
             update_thread.start()
             update_thread.join()  # Espera a que termine antes de continuar
-           
+
             if self.exit:
                 break
 
@@ -147,12 +149,14 @@ class Camera:
     def activar_usb(self):
         self.usb = True
         self.cap = cv2.VideoCapture(0)
+        self.cap2 = cv2.VideoCapture(0)
 
     def activar_wifi(self, ip: str, port: int = 8080):
         self.ip = ip
         self.port = port
         self.url = f'http://{self.ip}:{self.port}/video'
         self.cap = cv2.VideoCapture(self.url)
+        self.cap2 = cv2.VideoCapture(self.url)
         self.usb = False
 
     def cerrar(self):
@@ -178,12 +182,25 @@ class Camera:
             y = cuadros[i][0][0][1]
             cv2.line(imagen, (0, y),
                      (imagen.shape[1], y), color_linea, grosor_linea)
-            
-    def show_grid(self,frame,cuadros,margen=5):
-            # Dibujar el grid en el frame
-            self.dibujar_grid(frame, cuadros, margen=margen)
-            cv2.imshow('app', frame)
 
+    def show_grid(self, cuadros):
+        cuadro_ancho = 50
+        cuadro_alto = 50
+        divisiones_x = 14
+        divisiones_y = 14
+
+        while True:
+            ret, frame = self.cap2.read()
+            if not ret:
+                break
+            frame = cv2.resize(frame, (cuadro_ancho * divisiones_x, cuadro_alto * divisiones_y))
+            self.dibujar_grid(frame, cuadros, margen=5)
+            cv2.imshow('Tablero', frame)
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
+
+        self.cap.release()
+        cv2.destroyAllWindows()
 
     def procesar_cuadro(self, imagen, fila, columna, cuadros, margen=5):
         (x1, y1), (x2, y2) = cuadros[fila][columna]
@@ -209,7 +226,7 @@ class Camera:
     def clear_pieces(self):
         self.piezas = []
 
-    def procesar_porcion(self,start_i, end_i, frame, cuadros):
+    def procesar_porcion(self, start_i, end_i, frame, cuadros):
         for i in range(start_i, end_i):
             for j in range(14):
                 if i in self.null_positions and j in self.null_positions:
