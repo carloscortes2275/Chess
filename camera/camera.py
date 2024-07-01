@@ -71,6 +71,7 @@ columnas = {
     13: 'N'
 }
 
+
 class Camera:
     def __init__(self, fn_update):
         self.exit = False
@@ -96,7 +97,8 @@ class Camera:
                 fila.append(((x1, y1), (x2, y2)))
             cuadros.append(fila)
 
-        thread_show_grid = threading.Thread(target=self.show_grid, args=(cuadros,))
+        thread_show_grid = threading.Thread(
+            target=self.show_grid, args=(cuadros,))
         thread_show_grid.start()
 
         while True:
@@ -106,10 +108,11 @@ class Camera:
                 break
 
             # Redimensionar el frame al tamaño esperado
-            frame = cv2.resize(frame, (cuadro_ancho * divisiones_x, cuadro_alto * divisiones_y))
+            frame = cv2.resize(
+                frame, (cuadro_ancho * divisiones_x, cuadro_alto * divisiones_y))
             start = time.time()
 
-            #cada subproceso se encarga de procesar 2 filas
+            # cada subproceso se encarga de procesar 2 filas
             with concurrent.futures.ThreadPoolExecutor() as executor:
                 futures = [
                     executor.submit(self.procesar_porcion,
@@ -131,9 +134,11 @@ class Camera:
             # Espera a que todas las tareas terminen
             concurrent.futures.wait(futures)
 
-            print(f'Tiempo de procesamiento: {time.time() - start:.2f} segundos')
+            print(
+                f'Tiempo de procesamiento: {time.time() - start:.2f} segundos')
 
-            update_thread = threading.Thread(target=self.fn_update, args=(None,))
+            update_thread = threading.Thread(
+                target=self.fn_update, args=(None,))
             update_thread.start()
             update_thread.join()  # Espera a que termine antes de continuar
 
@@ -193,7 +198,8 @@ class Camera:
             ret, frame = self.cap2.read()
             if not ret:
                 break
-            frame = cv2.resize(frame, (cuadro_ancho * divisiones_x, cuadro_alto * divisiones_y))
+            frame = cv2.resize(
+                frame, (cuadro_ancho * divisiones_x, cuadro_alto * divisiones_y))
             self.dibujar_grid(frame, cuadros, margen=5)
             cv2.imshow('Tablero', frame)
             if cv2.waitKey(1) & 0xFF == ord('q'):

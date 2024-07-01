@@ -197,6 +197,8 @@ class Scores(ft.Column):
             controls=[
                 ft.Text("score", size=50, weight=ft.FontWeight.W_600,
                         font_family="BigBlueTerm437 Nerd Font"),
+
+
                 ft.Row(
                     [
                         Scorevalue("blue", self.s_blue)
@@ -266,8 +268,11 @@ class Scores(ft.Column):
 
 
 class Tablero(ft.Stack):
-    def __init__(self, scores: Scores) -> None:
+    def __init__(self, scores: Scores, fn_show_winner, page,menu) -> None:
         super().__init__()
+        self.page = page
+        self.menu = menu
+        self.fn_show_winner = fn_show_winner
         self.players = ["red", "blue", "black", "yellow"]
         self.tableros = ["tablero_list.pkl", "tablero_list2.pkl",
                          "tablero_list3.pkl", "tablero_list4.pkl"]
@@ -385,10 +390,8 @@ class Tablero(ft.Stack):
         # Para asegurar que no entre en un bucle infinito
         for _ in range(len(self.players)):
             self.turno = (self.turno + 1) % len(self.players)
-            # print(f"Intentando cambiar a turno: {self.turno} ({self.players[self.turno]})")  # Debug
             if self.players[self.turno] in self.active_players:
                 break
-        # print(f"Nuevo turno: {self.turno} ({self.players[self.turno]})")  # Debug
 
         self.piezas_pos = []
         for p in positions:
@@ -437,7 +440,14 @@ class Tablero(ft.Stack):
             if pieza["img"][0] == "K":  # Verificar si la pieza es un rey
                 jugadores_con_rey.add(pieza["img"][1])  # Añadir color del rey
 
-        # print(f"Jugadores con rey: {jugadores_con_rey}")  # Debug
+        # si solo hay un jugador con rey se muestra el ganador, debugear una vez exista el clasificador funcional
+        #esto es solo para mostrar como se ve en interfaz
+        if 1 == 1:
+            #player = self.color_to_player(list(jugadores_con_rey)[0])
+            player = "blue"
+            print(f'ganador: {player}')
+            self.fn_show_winner(self.page, player)
+            self.menu.connection.cerrar(None)
 
         # Actualizar la lista de jugadores activos
         self.active_players = {self.color_to_player(

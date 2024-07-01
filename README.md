@@ -6,9 +6,16 @@ In this project, with the assistance of a camera, a chess board will be mapped (
 - Project Management Framework: Scrum
 - Programming language: Python
 - Version: 3.11.3
-- User Interface: TkInter v8.5, Flet v0.22.0
+- User Interface: Flet v0.22.0
 - Artificial Intelligence: Computacional Vision: OpenCV
+- Tensorflow
 - Virtual environment: 20.25.1
 - Camera library: OpenCV
 - Camera: Smartphone
+
+
+![UI](interfaz.png)
+
+
+[Documentation](https://docs.google.com/document/d/1sFpr9NlIZtMYOlckSBXzGR7RDsSBIpba60sqQEzuxiI/edit)
 
